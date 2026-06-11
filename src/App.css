@@ -473,7 +473,7 @@ input {
   border: 1px solid rgba(139,92,246,0.2);
   background: #f5f3ff;
   color: #1f2937;
-  font-size: 14px;
+  font-size: 16px;
   font-family: inherit;
   outline: none;
   transition: border-color 0.15s;
@@ -1253,7 +1253,7 @@ input:focus { border-color: #8b5cf6; }
   padding: 14px 44px 14px 44px;
   border: 1.5px solid #e5e7eb;
   border-radius: 14px;
-  font-size: 14px;
+  font-size: 16px;
   background: #f9fafb;
   color: #111827;
   outline: none;
