@@ -20,7 +20,7 @@ type SettingsProps = {
   onLogout: () => void;
 };
 
-function Settings({ budget, onBudgetChange, profile, onProfileChange, expenses, recurring, salary, onSalaryChange, savingsGoal, onSavingsGoalChange, onLogout }: SettingsProps) {
+function Settings({ budget, onBudgetChange, profile, expenses, recurring, salary, onSalaryChange, savingsGoal, onSavingsGoalChange, onLogout }: SettingsProps) {
   const [notifications, setNotifications] = useState(true);
 
   const [editingBudget, setEditingBudget] = useState(false);
