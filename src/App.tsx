@@ -90,7 +90,22 @@ function App() {
       setBudget(parseFloat(setData.budget));
       setSalary(parseFloat(setData.salary));
       setSavingsGoal(parseFloat(setData.savings_goal));
-      setProfile({ name: setData.profile_name, email: setData.profile_email });
+      // Si la BD no té nom/email, fem servir les dades de l'autenticació
+      const { data: { user } } = await supabase.auth.getUser();
+      const authName  = user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? "";
+      const authEmail = user?.email ?? "";
+      setProfile({
+        name:  setData.profile_name  || authName,
+        email: setData.profile_email || authEmail,
+      });
+    } else {
+      // Primera vegada: no hi ha fila a user_settings, posem les dades d'auth
+      const { data: { user } } = await supabase.auth.getUser();
+      const authName  = user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? "";
+      const authEmail = user?.email ?? "";
+      if (authName || authEmail) {
+        setProfile({ name: authName, email: authEmail });
+      }
     }
 
     // Si hi ha recurrents pendents aquest mes, processar-les ara (fallback del cron)

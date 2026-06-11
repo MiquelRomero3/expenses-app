@@ -30,10 +30,6 @@ function Settings({ budget, onBudgetChange, profile, onProfileChange, expenses, 
   const [salaryInput, setSalaryInput]           = useState(String(salary || ""));
   const [savingsGoalInput, setSavingsGoalInput] = useState(String(savingsGoal || ""));
 
-  const [editingProfile, setEditingProfile] = useState(false);
-  const [nameInput, setNameInput]   = useState(profile.name);
-  const [emailInput, setEmailInput] = useState(profile.email);
-
   const saveBudget = () => {
     const val = parseFloat(budgetInput);
     if (!isNaN(val) && val > 0) onBudgetChange(val);
@@ -48,11 +44,6 @@ function Settings({ budget, onBudgetChange, profile, onProfileChange, expenses, 
     setEditingSalary(false);
   };
 
-  const saveProfile = () => {
-    onProfileChange({ name: nameInput, email: emailInput });
-    setEditingProfile(false);
-  };
-
   const exportData = () => {
     const data = JSON.stringify(expenses, null, 2);
     const blob = new Blob([data], { type: "application/json" });
@@ -64,7 +55,8 @@ function Settings({ budget, onBudgetChange, profile, onProfileChange, expenses, 
     URL.revokeObjectURL(url);
   };
 
-  const initial = profile.name?.trim()[0]?.toUpperCase() || "?";
+  // Inicial de l'email (primer caràcter abans de @)
+  const initial = profile.email?.trim()[0]?.toUpperCase() || "?";
   const totalRecurring = recurring.reduce((s, r) => s + r.amount, 0);
   const recommendedBudget = salary > 0 && savingsGoal > 0
     ? salary - savingsGoal - totalRecurring
@@ -79,11 +71,10 @@ function Settings({ budget, onBudgetChange, profile, onProfileChange, expenses, 
 
       <div className="body settings-body">
 
-        {/* Perfil */}
-        <div className="settings-profile-card" onClick={() => setEditingProfile(true)}>
+        {/* Perfil — només correu, sense nom */}
+        <div className="settings-profile-card">
           <div className="settings-avatar">{initial}</div>
           <div className="settings-profile-info">
-            <p className="settings-profile-name">{profile.name || "Sense nom"}</p>
             <p className="settings-profile-email">{profile.email || "Sense correu"}</p>
             <p className="settings-profile-status">
               <span className="settings-status-dot" />
@@ -238,20 +229,6 @@ function Settings({ budget, onBudgetChange, profile, onProfileChange, expenses, 
             )}
             <button className="btn-primary" onClick={saveSalary}>Guardar</button>
             <button className="btn-secondary" onClick={() => setEditingSalary(false)}>Cancel·lar</button>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL PERFIL */}
-      {editingProfile && (
-        <div className="modal-overlay" onClick={() => setEditingProfile(false)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-handle" />
-            <h2>Editar perfil</h2>
-            <input type="text" placeholder="Nom" value={nameInput} onChange={(e) => setNameInput(e.target.value)} autoFocus />
-            <input type="email" placeholder="Correu electrònic" value={emailInput} onChange={(e) => setEmailInput(e.target.value)} />
-            <button className="btn-primary" onClick={saveProfile}>Guardar</button>
-            <button className="btn-secondary" onClick={() => setEditingProfile(false)}>Cancel·lar</button>
           </div>
         </div>
       )}

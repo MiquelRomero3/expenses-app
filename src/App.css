@@ -799,9 +799,11 @@ input:focus { border-color: #8b5cf6; }
 
 .settings-body {
   padding: 16px;
+  padding-bottom: 96px; /* espai per la nav bar */
   display: flex;
   flex-direction: column;
   gap: 4px;
+  overflow-y: auto;
 }
 
 /* Targeta de perfil */
