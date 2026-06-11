@@ -16,19 +16,19 @@ type HomeProps = {
 
 function Home({ expenses, recurring, budget, salary, savingsGoal, onAddExpense, onDeleteExpense, onAddRecurring, onDeleteRecurring }: HomeProps) {
 
-  const [selectedMonth, setSelectedMonth]     = useState(new Date().getMonth());
-  const [showAllExpenses, setShowAllExpenses] = useState(false);
-  const [showAllCats, setShowAllCats]         = useState(false);
-  const [fabOpen, setFabOpen]                 = useState(false);
-  const [showForm, setShowForm]               = useState(false);
-  const [amount, setAmount]                   = useState("");
-  const [category, setCategory]               = useState("");
-  const [note, setNote]                       = useState("");
+  const [selectedMonth, setSelectedMonth]         = useState(new Date().getMonth());
+  const [showAllExpenses, setShowAllExpenses]     = useState(false);
+  const [showAllCats, setShowAllCats]             = useState(false);
+  const [fabOpen, setFabOpen]                     = useState(false);
+  const [showForm, setShowForm]                   = useState(false);
+  const [amount, setAmount]                       = useState("");
+  const [category, setCategory]                   = useState("");
+  const [note, setNote]                           = useState("");
   const [showRecurringForm, setShowRecurringForm] = useState(false);
-  const [rAmount, setRAmount]                 = useState("");
-  const [rCategory, setRCategory]             = useState("");
-  const [rNote, setRNote]                     = useState("");
-  const [rDay, setRDay]                       = useState("1");
+  const [rAmount, setRAmount]                     = useState("");
+  const [rCategory, setRCategory]                 = useState("");
+  const [rNote, setRNote]                         = useState("");
+  const [rDay, setRDay]                           = useState("1");
 
   const handleAddExpense = () => {
     if (!amount || !category) return;
@@ -47,6 +47,11 @@ function Home({ expenses, recurring, budget, salary, savingsGoal, onAddExpense, 
   const openPuntual   = () => { setFabOpen(false); setShowForm(true); };
   const openRecurring = () => { setFabOpen(false); setShowRecurringForm(true); };
 
+  // ── Càlculs ──────────────────────────────────────────────────────────────
+  const currentMonthIdx = new Date().getMonth();
+  const isCurrentMonth  = selectedMonth === currentMonthIdx;
+  const visibleMonths   = Array.from({ length: 6 }, (_, i) => (currentMonthIdx - 5 + i + 12) % 12);
+
   const monthExpenses = expenses.filter((e) => {
     const d = new Date(e.date);
     return d.getMonth() === selectedMonth && d.getFullYear() === new Date().getFullYear();
@@ -58,13 +63,15 @@ function Home({ expenses, recurring, budget, salary, savingsGoal, onAddExpense, 
   const remaining = budget - total;
 
   const todayStr   = new Date().toDateString();
-  const todayTotal = expenses.filter((e) => new Date(e.date).toDateString() === todayStr).reduce((s, e) => s + e.amount, 0);
+  const todayTotal = expenses
+    .filter((e) => new Date(e.date).toDateString() === todayStr)
+    .reduce((s, e) => s + e.amount, 0);
 
-  const dayOfMonth = new Date().getDate();
-  const dailyAvg   = dayOfMonth > 0 ? total / dayOfMonth : 0;
+  const dayOfMonth = isCurrentMonth
+    ? new Date().getDate()
+    : new Date(new Date().getFullYear(), selectedMonth + 1, 0).getDate();
+  const dailyAvg = dayOfMonth > 0 ? total / dayOfMonth : 0;
 
-  // Estalvi real del mes: sou menys el que es preveu gastar (pressupost), no el gastat real
-  // Això evita que l'estalvi "augmenti" artificialment quan gastes menys
   const currentSavings = salary > 0 ? salary - budget : null;
   const savingsOnTrack = currentSavings !== null && savingsGoal > 0 ? currentSavings >= savingsGoal : null;
 
@@ -75,9 +82,6 @@ function Home({ expenses, recurring, budget, salary, savingsGoal, onAddExpense, 
 
   const visibleExpenses = showAllExpenses ? monthExpenses : monthExpenses.slice(0, 6);
 
-  const currentMonthIdx = new Date().getMonth();
-  const visibleMonths   = Array.from({ length: 6 }, (_, i) => (currentMonthIdx - 5 + i + 12) % 12);
-
   return (
     <>
       {/* HEADER */}
@@ -85,9 +89,8 @@ function Home({ expenses, recurring, budget, salary, savingsGoal, onAddExpense, 
         <div className="header-top-row">
           <div>
             <p className="header-eyebrow">Pressupost mensual</p>
-            <p className="header-month">{MONTHS[selectedMonth]} 2026 <span className="chevron">›</span></p>
+            <p className="header-month">{MONTHS[selectedMonth]} 2026</p>
           </div>
-          <button className="bell-btn">🔔</button>
         </div>
         <div className="header-balance">
           <div>
@@ -125,10 +128,17 @@ function Home({ expenses, recurring, budget, salary, savingsGoal, onAddExpense, 
 
         {/* Stats */}
         <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-header"><span className="stat-icon green">↓</span><span className="stat-label">Avui gastat</span></div>
-            <p className="stat-value">{todayTotal.toFixed(2)}€</p>
-          </div>
+          {isCurrentMonth ? (
+            <div className="stat-card">
+              <div className="stat-header"><span className="stat-icon green">↓</span><span className="stat-label">Avui gastat</span></div>
+              <p className="stat-value">{todayTotal.toFixed(2)}€</p>
+            </div>
+          ) : (
+            <div className="stat-card">
+              <div className="stat-header"><span className="stat-icon green">↓</span><span className="stat-label">Total del mes</span></div>
+              <p className="stat-value">{total.toFixed(2)}€</p>
+            </div>
+          )}
           <div className="stat-card">
             <div className="stat-header"><span className="stat-icon orange">↑</span><span className="stat-label">Mitjana diària</span></div>
             <p className="stat-value">{dailyAvg.toFixed(2)}€</p>
@@ -142,7 +152,7 @@ function Home({ expenses, recurring, budget, salary, savingsGoal, onAddExpense, 
               <div className="savings-row">
                 <div className="savings-icon">🏦</div>
                 <div className="savings-info">
-                  <p className="savings-label">Estalvi previst aquest mes</p>
+                  <p className="savings-label">{isCurrentMonth ? "Estalvi previst aquest mes" : `Estalvi previst ${MONTHS[selectedMonth]}`}</p>
                   <p className="savings-amount">{currentSavings!.toFixed(2)}€</p>
                 </div>
                 <div className={`savings-badge ${savingsOnTrack ? "on-track" : "off-track"}`}>

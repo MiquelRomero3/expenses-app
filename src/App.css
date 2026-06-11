@@ -64,19 +64,6 @@ body {
   font-style: normal;
 }
 
-.bell-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.15);
-  border: none;
-  cursor: pointer;
-  font-size: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
 
 .header-balance {
   margin-bottom: 16px;
