@@ -2,42 +2,34 @@ import { useState } from "react";
 import { CATEGORIES, CAT_KEYS, MONTHS, getCfg } from "../constants";
 import type { Expense, RecurringExpense } from "../constants";
 
-// ─── Props ────────────────────────────────────────────────────────────────────
 type HomeProps = {
   expenses: Expense[];
   recurring: RecurringExpense[];
   budget: number;
+  salary: number;
+  savingsGoal: number;
   onAddExpense: (expense: Omit<Expense, "id" | "date">) => void;
   onDeleteExpense: (id: number) => void;
   onAddRecurring: (r: Omit<RecurringExpense, "id" | "lastTriggered">) => void;
   onDeleteRecurring: (id: number) => void;
 };
 
-// ─── Home ─────────────────────────────────────────────────────────────────────
-function Home({ expenses, recurring, budget, onAddExpense, onDeleteExpense, onAddRecurring, onDeleteRecurring }: HomeProps) {
+function Home({ expenses, recurring, budget, salary, savingsGoal, onAddExpense, onDeleteExpense, onAddRecurring, onDeleteRecurring }: HomeProps) {
 
-  // ── UI state ──
   const [selectedMonth, setSelectedMonth]     = useState(new Date().getMonth());
   const [showAllExpenses, setShowAllExpenses] = useState(false);
   const [showAllCats, setShowAllCats]         = useState(false);
-
-  // ── FAB menu ──
-  const [fabOpen, setFabOpen] = useState(false);
-
-  // ── Modal despesa puntual ──
-  const [showForm, setShowForm]   = useState(false);
-  const [amount, setAmount]       = useState("");
-  const [category, setCategory]   = useState("");
-  const [note, setNote]           = useState("");
-
-  // ── Modal despesa recurrent ──
+  const [fabOpen, setFabOpen]                 = useState(false);
+  const [showForm, setShowForm]               = useState(false);
+  const [amount, setAmount]                   = useState("");
+  const [category, setCategory]               = useState("");
+  const [note, setNote]                       = useState("");
   const [showRecurringForm, setShowRecurringForm] = useState(false);
-  const [rAmount, setRAmount]       = useState("");
-  const [rCategory, setRCategory]   = useState("");
-  const [rNote, setRNote]           = useState("");
-  const [rDay, setRDay]             = useState("1");
+  const [rAmount, setRAmount]                 = useState("");
+  const [rCategory, setRCategory]             = useState("");
+  const [rNote, setRNote]                     = useState("");
+  const [rDay, setRDay]                       = useState("1");
 
-  // ─── Handlers ────────────────────────────────────────────────────────────────
   const handleAddExpense = () => {
     if (!amount || !category) return;
     onAddExpense({ amount: parseFloat(amount), category, note: note || undefined });
@@ -47,20 +39,14 @@ function Home({ expenses, recurring, budget, onAddExpense, onDeleteExpense, onAd
 
   const handleAddRecurring = () => {
     if (!rAmount || !rCategory) return;
-    onAddRecurring({
-      amount: parseFloat(rAmount),
-      category: rCategory,
-      note: rNote || undefined,
-      dayOfMonth: parseInt(rDay, 10),
-    });
+    onAddRecurring({ amount: parseFloat(rAmount), category: rCategory, note: rNote || undefined, dayOfMonth: parseInt(rDay, 10) });
     setRAmount(""); setRCategory(""); setRNote(""); setRDay("1");
     setShowRecurringForm(false);
   };
 
-  const openPuntual = () => { setFabOpen(false); setShowForm(true); };
+  const openPuntual   = () => { setFabOpen(false); setShowForm(true); };
   const openRecurring = () => { setFabOpen(false); setShowRecurringForm(true); };
 
-  // ─── Càlculs ──────────────────────────────────────────────────────────────────
   const monthExpenses = expenses.filter((e) => {
     const d = new Date(e.date);
     return d.getMonth() === selectedMonth && d.getFullYear() === new Date().getFullYear();
@@ -72,12 +58,15 @@ function Home({ expenses, recurring, budget, onAddExpense, onDeleteExpense, onAd
   const remaining = budget - total;
 
   const todayStr   = new Date().toDateString();
-  const todayTotal = expenses
-    .filter((e) => new Date(e.date).toDateString() === todayStr)
-    .reduce((s, e) => s + e.amount, 0);
+  const todayTotal = expenses.filter((e) => new Date(e.date).toDateString() === todayStr).reduce((s, e) => s + e.amount, 0);
 
   const dayOfMonth = new Date().getDate();
   const dailyAvg   = dayOfMonth > 0 ? total / dayOfMonth : 0;
+
+  // Estalvi real del mes: sou menys el que es preveu gastar (pressupost), no el gastat real
+  // Això evita que l'estalvi "augmenti" artificialment quan gastes menys
+  const currentSavings = salary > 0 ? salary - budget : null;
+  const savingsOnTrack = currentSavings !== null && savingsGoal > 0 ? currentSavings >= savingsGoal : null;
 
   const catMap: Record<string, number> = {};
   monthExpenses.forEach((e) => { catMap[e.category] = (catMap[e.category] || 0) + e.amount; });
@@ -89,17 +78,14 @@ function Home({ expenses, recurring, budget, onAddExpense, onDeleteExpense, onAd
   const currentMonthIdx = new Date().getMonth();
   const visibleMonths   = Array.from({ length: 6 }, (_, i) => (currentMonthIdx - 5 + i + 12) % 12);
 
-  // ─── Render ───────────────────────────────────────────────────────────────────
   return (
     <>
-      {/* ── HEADER ── */}
+      {/* HEADER */}
       <div className="header">
         <div className="header-top-row">
           <div>
             <p className="header-eyebrow">Pressupost mensual</p>
-            <p className="header-month">
-              {MONTHS[selectedMonth]} 2026 <span className="chevron">›</span>
-            </p>
+            <p className="header-month">{MONTHS[selectedMonth]} 2026 <span className="chevron">›</span></p>
           </div>
           <button className="bell-btn">🔔</button>
         </div>
@@ -125,7 +111,7 @@ function Home({ expenses, recurring, budget, onAddExpense, onDeleteExpense, onAd
         </div>
       </div>
 
-      {/* ── BODY ── */}
+      {/* BODY */}
       <div className="body">
 
         {/* Month tabs */}
@@ -149,7 +135,35 @@ function Home({ expenses, recurring, budget, onAddExpense, onDeleteExpense, onAd
           </div>
         </div>
 
-        {/* Despeses recurrents programades */}
+        {/* Targeta estalvi */}
+        {salary > 0 && savingsGoal > 0 && (
+          <div className="section">
+            <div className="savings-card">
+              <div className="savings-row">
+                <div className="savings-icon">🏦</div>
+                <div className="savings-info">
+                  <p className="savings-label">Estalvi previst aquest mes</p>
+                  <p className="savings-amount">{currentSavings!.toFixed(2)}€</p>
+                </div>
+                <div className={`savings-badge ${savingsOnTrack ? "on-track" : "off-track"}`}>
+                  {savingsOnTrack ? "✓ En camí" : "✗ Per sota"}
+                </div>
+              </div>
+              <div className="savings-bar-bg">
+                <div
+                  className={`savings-bar-fill ${savingsOnTrack ? "on-track" : "off-track"}`}
+                  style={{ width: `${Math.min((currentSavings! / savingsGoal) * 100, 100)}%` }}
+                />
+              </div>
+              <div className="savings-bar-labels">
+                <span>Objectiu: {savingsGoal}€</span>
+                <span>{Math.round((currentSavings! / savingsGoal) * 100)}%</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Despeses programades */}
         {recurring.length > 0 && (
           <div className="section">
             <div className="section-header">
@@ -160,9 +174,7 @@ function Home({ expenses, recurring, budget, onAddExpense, onDeleteExpense, onAd
                 const cfg = getCfg(r.category);
                 return (
                   <div key={r.id} className="expense-row">
-                    <div className="expense-icon" style={{ background: cfg.bg }}>
-                      <span>{cfg.emoji}</span>
-                    </div>
+                    <div className="expense-icon" style={{ background: cfg.bg }}><span>{cfg.emoji}</span></div>
                     <div className="expense-info">
                       <p className="expense-name">{r.note || r.category}</p>
                       <p className="expense-date">Cada mes, dia {r.dayOfMonth}</p>
@@ -189,7 +201,7 @@ function Home({ expenses, recurring, budget, onAddExpense, onDeleteExpense, onAd
             </div>
             <div className="cat-list">
               {(showAllCats ? catTotals : catTotals.slice(0, 4)).map(([cat, amt]) => {
-                const cfg = getCfg(cat);
+                const cfg    = getCfg(cat);
                 const barPct = Math.round((amt / maxCat) * 100);
                 return (
                   <div key={cat} className="cat-row">
@@ -247,7 +259,7 @@ function Home({ expenses, recurring, budget, onAddExpense, onDeleteExpense, onAd
 
       </div>
 
-      {/* ── MODAL DESPESA PUNTUAL ── */}
+      {/* MODAL DESPESA PUNTUAL */}
       {showForm && (
         <div className="modal-overlay" onClick={() => setShowForm(false)}>
           <div className="modal-card" onClick={(ev) => ev.stopPropagation()}>
@@ -268,7 +280,7 @@ function Home({ expenses, recurring, budget, onAddExpense, onDeleteExpense, onAd
         </div>
       )}
 
-      {/* ── MODAL DESPESA RECURRENT ── */}
+      {/* MODAL DESPESA RECURRENT */}
       {showRecurringForm && (
         <div className="modal-overlay" onClick={() => setShowRecurringForm(false)}>
           <div className="modal-card" onClick={(ev) => ev.stopPropagation()}>
@@ -285,14 +297,7 @@ function Home({ expenses, recurring, budget, onAddExpense, onDeleteExpense, onAd
             <input type="text" placeholder="Nota (ex: Netflix)" value={rNote} onChange={(e) => setRNote(e.target.value)} />
             <div className="day-picker-wrap">
               <label className="day-picker-label">Dia del mes que es cobra</label>
-              <input
-                type="number"
-                min="1"
-                max="28"
-                placeholder="Dia (1-28)"
-                value={rDay}
-                onChange={(e) => setRDay(e.target.value)}
-              />
+              <input type="number" min="1" max="28" placeholder="Dia (1-28)" value={rDay} onChange={(e) => setRDay(e.target.value)} />
             </div>
             <button className="btn-primary" onClick={handleAddRecurring}>Programar despesa</button>
             <button className="btn-secondary" onClick={() => setShowRecurringForm(false)}>Cancel·lar</button>
@@ -300,7 +305,7 @@ function Home({ expenses, recurring, budget, onAddExpense, onDeleteExpense, onAd
         </div>
       )}
 
-      {/* ── FAB MENU ── */}
+      {/* FAB MENU */}
       {fabOpen && (
         <div className="fab-menu-overlay" onClick={() => setFabOpen(false)}>
           <div className="fab-menu" onClick={(e) => e.stopPropagation()}>
@@ -323,7 +328,7 @@ function Home({ expenses, recurring, budget, onAddExpense, onDeleteExpense, onAd
         </div>
       )}
 
-      {/* ── FAB ── */}
+      {/* FAB */}
       <button className={`fab${fabOpen ? " fab-open" : ""}`} onClick={() => setFabOpen(!fabOpen)}>
         {fabOpen ? "✕" : "+"}
       </button>
